@@ -1,0 +1,16 @@
+{
+	"FileVersion": 3,
+	"EngineAssociation": "{40483155-48B5-4AE0-A24B-BA9A9B595EA6}",
+	"Category": "",
+	"Description": "",
+	"Modules": [
+		{
+			"Name": "GameJam",
+			"Type": "Runtime",
+			"LoadingPhase": "Default",
+			"AdditionalDependencies": [
+				"Engine"
+			]
+		}
+	]
+}
