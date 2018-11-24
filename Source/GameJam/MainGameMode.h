@@ -17,9 +17,19 @@ public:
 	//Called every frame
 	virtual void Tick (float DeltaTime) override;
 
+	virtual AActor* ChoosePlayerStart_Implementation (AController* Player) override;
+
+	int GetPlayerIndex ();
+
 	float gameTimer = 600.0f;
 	bool gameFinished = false;
 
 private:
 	void FinishGame ();
+
+	int _maxPlayers = 3;
+	int _playerCount = 0;
+	int _currentPlayerStartIndex = 0;
+
+	int _playerCharacters = 0;
 };

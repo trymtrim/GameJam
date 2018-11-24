@@ -28,6 +28,9 @@ public:
 	UFUNCTION (BlueprintCallable)
 	FVector ClientGetLaserTargetPosition ();
 
+	UFUNCTION (BlueprintImplementableEvent, Category = "Character Controller")
+	void ChangeMeshBP (int playerIndex);
+
 	UPROPERTY (BlueprintReadOnly) FVector laserTargetPosition;
 	UPROPERTY (Replicated, BlueprintReadOnly) float polymorphCharge = 0.0f;
 
@@ -62,6 +65,9 @@ private:
 
 	void TurnIntoPig ();
 	void TurnIntoHuman ();
+
+	UFUNCTION (Server, Reliable, WithValidation)
+	void ServerChangeMesh ();
 
 	UPROPERTY (Replicated) float _gameTimer = 600.0f;
 

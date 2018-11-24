@@ -23,6 +23,9 @@ void AMainCharacterController::BeginPlay ()
 
 	if (GetWorld ()->IsServer ())
 		_gameMode = Cast <AMainGameMode> (GetWorld ()->GetAuthGameMode ());
+	else
+		ServerChangeMesh ();
+
 }
 
 //Called every frame
@@ -82,6 +85,16 @@ void AMainCharacterController::Tick (float DeltaTime)
 
 		gameTimerText = minutesString + ":" + secondsString;
 	}
+}
+
+void AMainCharacterController::ServerChangeMesh_Implementation ()
+{
+	ChangeMeshBP (_gameMode->GetPlayerIndex ());
+}
+
+bool AMainCharacterController::ServerChangeMesh_Validate ()
+{
+	return true;
 }
 
 void AMainCharacterController::StartPolymorph_Implementation ()
