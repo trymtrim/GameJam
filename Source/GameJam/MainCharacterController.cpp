@@ -190,7 +190,7 @@ void AMainCharacterController::ShootInput ()
 
 void AMainCharacterController::Shoot_Implementation (FVector startPosition, FVector endPosition)
 {
-	if (isPig)
+	if (isPig || _isPolymorphing)
 		return;
 
 	ShootBP ();
