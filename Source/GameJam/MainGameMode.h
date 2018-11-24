@@ -13,4 +13,13 @@ class GAMEJAM_API AMainGameMode : public AGameMode
 	
 public:
 	AMainGameMode ();
+
+	//Called every frame
+	virtual void Tick (float DeltaTime) override;
+
+	float gameTimer = 600.0f;
+	bool gameFinished = false;
+
+private:
+	void FinishGame ();
 };

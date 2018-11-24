@@ -20,6 +20,9 @@ void AMainCharacterController::BeginPlay ()
 	TArray <UCameraComponent*> cameraComps;
 	GetComponents <UCameraComponent> (cameraComps);
 	_cameraComponent = cameraComps [0];
+
+	if (GetWorld ()->IsServer ())
+		_gameMode = Cast <AMainGameMode> (GetWorld ()->GetAuthGameMode ());
 }
 
 //Called every frame
@@ -55,6 +58,29 @@ void AMainCharacterController::Tick (float DeltaTime)
 			if (_removeTargetPigTimerTimer <= 0.0f)
 				showTargetPigTimer = false;
 		}
+
+		_gameTimer = _gameMode->gameTimer;
+	}
+	else
+	{
+		int minutes = FMath::FloorToInt (_gameTimer / 60);
+		int seconds = FMath::RoundToInt ((int) _gameTimer % 60);
+
+
+		FString minutesString = "";
+		FString secondsString = "";
+
+		if (minutes < 10)
+			minutesString = "0" + FString::FromInt (minutes);
+		else
+			minutesString = FString::FromInt (minutes);
+
+		if (seconds < 10)
+			secondsString = "0" + FString::FromInt (seconds);
+		else
+			secondsString = FString::FromInt (seconds);
+
+		gameTimerText = minutesString + ":" + secondsString;
 	}
 }
 
@@ -93,6 +119,7 @@ void AMainCharacterController::Polymorph ()
 		StopPolymorph ();
 		return;
 	}
+
 	//Line trace from camera to check if there is something in the crosshair's sight
 	FCollisionQueryParams traceParams = FCollisionQueryParams (FName (TEXT ("RV_Trace")), true, this);
 	traceParams.bTraceComplex = true;
@@ -134,9 +161,32 @@ void AMainCharacterController::Polymorph ()
 	}
 }
 
+FVector AMainCharacterController::ClientGetLaserTargetPosition ()
+{
+	//Line trace from camera to check if there is something in the crosshair's sight
+	FCollisionQueryParams traceParams = FCollisionQueryParams (FName (TEXT ("RV_Trace")), true, this);
+	traceParams.bTraceComplex = true;
+	traceParams.bReturnPhysicalMaterial = false;
+
+	FHitResult hit (ForceInit);
+
+	//Declare start and end position of the line trace based on camera position and rotation
+	FVector start = _cameraComponent->GetComponentLocation ();
+	FVector end = _cameraComponent->GetComponentLocation () + (_cameraComponent->GetForwardVector () * 100000.0f);
+
+	//Check if line trace hits anything
+	if (GetWorld ()->LineTraceSingleByChannel (hit, start, end, ECC_Visibility, traceParams))
+		return hit.Location;
+
+	return _cameraComponent->GetComponentLocation () + (_cameraComponent->GetForwardVector () * 5000.0f);
+}
+
 void AMainCharacterController::HitPolymorph ()
 {
-	polymorphCharge += 0.01;
+	if (isPig)
+		return;
+
+	polymorphCharge += 0.5f * GetWorld ()->DeltaTimeSeconds;
 
 	if (polymorphCharge >= 1.0f)
 	{
@@ -147,6 +197,9 @@ void AMainCharacterController::HitPolymorph ()
 
 void AMainCharacterController::TurnIntoPig ()
 {
+	if (_isPolymorphing)
+		StopPolymorph ();
+
 	pigTimer = 20.0f;
 	isPig = true;
 	TurnIntoPigBP ();
@@ -168,6 +221,8 @@ void AMainCharacterController::GetLifetimeReplicatedProps (TArray <FLifetimeProp
 
 	DOREPLIFETIME (AMainCharacterController, showTargetPigTimer);
 	DOREPLIFETIME (AMainCharacterController, targetPigTimer);
+
+	DOREPLIFETIME (AMainCharacterController, _gameTimer);
 }
 
 //Called to bind functionality to input

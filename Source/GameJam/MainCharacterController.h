@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "Camera/CameraComponent.h"
+#include "MainGameMode.h"
 #include "MainCharacterController.generated.h"
 
 UCLASS()
@@ -24,6 +25,9 @@ public:
 
 	void HitPolymorph ();
 
+	UFUNCTION (BlueprintCallable)
+	FVector ClientGetLaserTargetPosition ();
+
 	UPROPERTY (BlueprintReadOnly) FVector laserTargetPosition;
 	UPROPERTY (Replicated, BlueprintReadOnly) float polymorphCharge = 0.0f;
 
@@ -32,6 +36,8 @@ public:
 
 	UPROPERTY (Replicated, BlueprintReadOnly) bool showTargetPigTimer = false;
 	UPROPERTY (Replicated, BlueprintReadOnly) float targetPigTimer = 0.0f;
+
+	UPROPERTY (BlueprintReadOnly) FString gameTimerText = "";
 
 protected:
 	//Called when the game starts or when spawned
@@ -57,9 +63,12 @@ private:
 	void TurnIntoPig ();
 	void TurnIntoHuman ();
 
+	UPROPERTY (Replicated) float _gameTimer = 600.0f;
+
 	bool _isPolymorphing = false;
 
 	float _removeTargetPigTimerTimer = 0.0f;
 
 	UCameraComponent* _cameraComponent;
+	AMainGameMode* _gameMode;
 };
