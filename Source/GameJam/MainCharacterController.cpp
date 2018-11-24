@@ -36,6 +36,7 @@ void AMainCharacterController::Tick (float DeltaTime)
 void AMainCharacterController::StartPolymorph_Implementation ()
 {
 	_isPolymorphing = true;
+	StartPolymorphBP ();
 }
 
 bool AMainCharacterController::StartPolymorph_Validate ()
@@ -46,6 +47,7 @@ bool AMainCharacterController::StartPolymorph_Validate ()
 void AMainCharacterController::StopPolymorph_Implementation ()
 {
 	_isPolymorphing = false;
+	StopPolymorphBP ();
 }
 
 bool AMainCharacterController::StopPolymorph_Validate ()
@@ -69,6 +71,8 @@ void AMainCharacterController::Polymorph ()
 	//Check if line trace hits anything
 	if (GetWorld ()->LineTraceSingleByChannel (hit, start, end, ECC_Visibility, traceParams))
 	{
+		laserTargetPosition = hit.Location;
+
 		//If line trace hits a player, polymorph the target
 		if (hit.GetActor ()->ActorHasTag ("Player"))
 		{
@@ -81,7 +85,7 @@ void AMainCharacterController::Polymorph ()
 	}
 	else
 	{
-
+		laserTargetPosition = _cameraComponent->GetComponentLocation () + (_cameraComponent->GetForwardVector () * 200.0f);
 	}
 }
 

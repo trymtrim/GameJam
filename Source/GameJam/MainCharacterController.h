@@ -22,6 +22,8 @@ public:
 	//Called to bind functionality to input
 	virtual void SetupPlayerInputComponent (class UInputComponent* PlayerInputComponent) override;
 
+	UPROPERTY (BlueprintReadOnly) FVector laserTargetPosition;
+
 protected:
 	//Called when the game starts or when spawned
 	virtual void BeginPlay () override;
@@ -30,6 +32,10 @@ protected:
 	void TurnIntoPigBP ();
 	UFUNCTION (BlueprintImplementableEvent, Category = "Character Controller")
 	void TurnIntoHumanBP ();
+	UFUNCTION (BlueprintImplementableEvent, Category = "Character Controller")
+	void StartPolymorphBP ();
+	UFUNCTION (BlueprintImplementableEvent, Category = "Character Controller")
+	void StopPolymorphBP ();
 
 private:
 	UFUNCTION (Server, Reliable, WithValidation)
