@@ -25,11 +25,11 @@ public:
 
 	void HitPolymorph ();
 
+	UFUNCTION (BlueprintImplementableEvent, Category = "Character Controller")
+	void OnHitBP ();
+
 	UFUNCTION (BlueprintCallable)
 	FVector ClientGetLaserTargetPosition ();
-
-	UFUNCTION (BlueprintImplementableEvent, Category = "Character Controller")
-	void ChangeMeshBP (int playerIndex);
 
 	UPROPERTY (BlueprintReadOnly) FVector laserTargetPosition;
 	UPROPERTY (Replicated, BlueprintReadOnly) float polymorphCharge = 0.0f;
@@ -40,12 +40,17 @@ public:
 	UPROPERTY (Replicated, BlueprintReadOnly) bool showTargetPigTimer = false;
 	UPROPERTY (Replicated, BlueprintReadOnly) float targetPigTimer = 0.0f;
 
+	UPROPERTY (Replicated, BlueprintReadOnly) bool pigCharging = false;
+	UPROPERTY (Replicated, BlueprintReadOnly) float pigChargeTimer = 0.0f;
+
 	UPROPERTY (BlueprintReadOnly) FString gameTimerText = "";
 
 protected:
 	//Called when the game starts or when spawned
 	virtual void BeginPlay () override;
 
+	UFUNCTION (BlueprintImplementableEvent, Category = "Character Controller")
+	void ChangeMeshBP (int playerIndex);
 	UFUNCTION (BlueprintImplementableEvent, Category = "Character Controller")
 	void TurnIntoPigBP ();
 	UFUNCTION (BlueprintImplementableEvent, Category = "Character Controller")
@@ -54,6 +59,8 @@ protected:
 	void StartPolymorphBP ();
 	UFUNCTION (BlueprintImplementableEvent, Category = "Character Controller")
 	void StopPolymorphBP ();
+	UFUNCTION (BlueprintImplementableEvent, Category = "Character Controller")
+	void ShootBP ();
 
 private:
 	UFUNCTION (Server, Reliable, WithValidation)
@@ -63,8 +70,21 @@ private:
 
 	void Polymorph ();
 
+	UFUNCTION (Server, Reliable, WithValidation)
+	void StartCharge ();
+	UFUNCTION (Server, Reliable, WithValidation)
+	void StopCharge ();
+
+	void Charge ();
+	void StopChargeInput ();
+
 	void TurnIntoPig ();
 	void TurnIntoHuman ();
+
+	void ShootInput ();
+
+	UFUNCTION (Server, Reliable, WithValidation)
+	void Shoot (FVector startPosition, FVector endPosition);
 
 	UFUNCTION (Server, Reliable, WithValidation)
 	void ServerChangeMesh ();

@@ -25,7 +25,6 @@ void AMainCharacterController::BeginPlay ()
 		_gameMode = Cast <AMainGameMode> (GetWorld ()->GetAuthGameMode ());
 	else
 		ServerChangeMesh ();
-
 }
 
 //Called every frame
@@ -174,6 +173,95 @@ void AMainCharacterController::Polymorph ()
 	}
 }
 
+void AMainCharacterController::ShootInput ()
+{
+	if (isPig)
+	{
+		StartCharge ();
+		return;
+	}
+
+	//Declare start and end position of the line trace based on camera position and rotation
+	FVector start = _cameraComponent->GetComponentLocation ();
+	FVector end = _cameraComponent->GetComponentLocation () + (_cameraComponent->GetForwardVector () * 100000.0f);
+
+	Shoot (start, end);
+}
+
+void AMainCharacterController::Shoot_Implementation (FVector startPosition, FVector endPosition)
+{
+	if (isPig)
+		return;
+
+	ShootBP ();
+
+	//Line trace from camera to check if there is something in the crosshair's sight
+	FCollisionQueryParams traceParams = FCollisionQueryParams (FName (TEXT ("RV_Trace")), true, this);
+	traceParams.bTraceComplex = true;
+	traceParams.bReturnPhysicalMaterial = false;
+
+	FHitResult hit (ForceInit);
+
+	//Declare start and end position of the line trace based on camera position and rotation
+	FVector start = startPosition;
+	FVector end = endPosition;
+
+	//Check if line trace hits anything
+	if (GetWorld ()->LineTraceSingleByChannel (hit, start, end, ECC_Visibility, traceParams))
+	{
+		if (hit.GetActor () == nullptr)
+			return;
+
+		//If line trace hits a player, polymorph the target
+		if (hit.GetActor ()->ActorHasTag ("Player"))
+		{
+			AMainCharacterController* player = Cast <AMainCharacterController> (hit.GetActor ());
+
+			if (player->isPig)
+				player->OnHitBP ();
+		}
+	}
+}
+
+bool AMainCharacterController::Shoot_Validate (FVector startPosition, FVector endPosition)
+{
+	return true;
+}
+
+void AMainCharacterController::StartCharge_Implementation ()
+{
+	pigCharging = true;
+}
+
+bool AMainCharacterController::StartCharge_Validate ()
+{
+	return true;
+}
+
+void AMainCharacterController::StopCharge_Implementation ()
+{
+	pigCharging = false;
+	pigChargeTimer = 0.0f;
+
+	//Do the charge
+}
+
+bool AMainCharacterController::StopCharge_Validate ()
+{
+	return true;
+}
+
+void AMainCharacterController::Charge ()
+{
+
+}
+
+void AMainCharacterController::StopChargeInput ()
+{
+	if (isPig)
+		StopCharge ();
+}
+
 FVector AMainCharacterController::ClientGetLaserTargetPosition ()
 {
 	//Line trace from camera to check if there is something in the crosshair's sight
@@ -235,6 +323,9 @@ void AMainCharacterController::GetLifetimeReplicatedProps (TArray <FLifetimeProp
 	DOREPLIFETIME (AMainCharacterController, showTargetPigTimer);
 	DOREPLIFETIME (AMainCharacterController, targetPigTimer);
 
+	DOREPLIFETIME (AMainCharacterController, pigCharging);
+	DOREPLIFETIME (AMainCharacterController, pigChargeTimer);
+
 	DOREPLIFETIME (AMainCharacterController, _gameTimer);
 }
 
@@ -245,4 +336,6 @@ void AMainCharacterController::SetupPlayerInputComponent (UInputComponent* Playe
 
 	PlayerInputComponent->BindAction ("Polymorph", IE_Pressed, this, &AMainCharacterController::StartPolymorph);
 	PlayerInputComponent->BindAction ("Polymorph", IE_Released, this, &AMainCharacterController::StopPolymorph);
+	PlayerInputComponent->BindAction ("Shoot", IE_Pressed, this, &AMainCharacterController::ShootInput);
+	PlayerInputComponent->BindAction ("Shoot", IE_Released, this, &AMainCharacterController::StopChargeInput);
 }
