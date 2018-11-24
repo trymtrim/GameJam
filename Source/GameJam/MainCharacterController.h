@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "Camera/CameraComponent.h"
 #include "MainCharacterController.generated.h"
 
 UCLASS()
@@ -24,4 +25,24 @@ public:
 protected:
 	//Called when the game starts or when spawned
 	virtual void BeginPlay () override;
+
+	UFUNCTION (BlueprintImplementableEvent, Category = "Character Controller")
+	void TurnIntoPigBP ();
+	UFUNCTION (BlueprintImplementableEvent, Category = "Character Controller")
+	void TurnIntoHumanBP ();
+
+private:
+	UFUNCTION (Server, Reliable, WithValidation)
+	void StartPolymorph ();
+	UFUNCTION (Server, Reliable, WithValidation)
+	void StopPolymorph ();
+
+	void Polymorph ();
+
+	void TurnIntoPig ();
+	void TurnIntoHuman ();
+
+	bool _isPolymorphing = false;
+
+	UCameraComponent* _cameraComponent;
 };
