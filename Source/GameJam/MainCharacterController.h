@@ -82,16 +82,25 @@ private:
 	void TurnIntoHuman ();
 
 	void ShootInput ();
+	void ClientShoot ();
+	void ResetShootCooldown ();
+
 
 	UFUNCTION (Server, Reliable, WithValidation)
 	void Shoot (FVector startPosition, FVector endPosition);
 
 	UFUNCTION (Server, Reliable, WithValidation)
+	void SetShootingToFalse ();
+
+	UFUNCTION (Server, Reliable, WithValidation)
 	void ServerChangeMesh ();
+
+	UPROPERTY (Replicated) bool _canShoot = true;
+	bool _isShooting = false;
 
 	UPROPERTY (Replicated) float _gameTimer = 600.0f;
 
-	bool _isPolymorphing = false;
+	UPROPERTY (Replicated) bool _isPolymorphing = false;
 
 	float _removeTargetPigTimerTimer = 0.0f;
 

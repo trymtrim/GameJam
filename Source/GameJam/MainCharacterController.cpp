@@ -83,6 +83,14 @@ void AMainCharacterController::Tick (float DeltaTime)
 			secondsString = FString::FromInt (seconds);
 
 		gameTimerText = minutesString + ":" + secondsString;
+
+		if (_isShooting)
+		{
+			if (_isPolymorphing)
+				_isShooting = false;
+			else
+				ClientShoot ();
+		}
 	}
 }
 
@@ -98,7 +106,7 @@ bool AMainCharacterController::ServerChangeMesh_Validate ()
 
 void AMainCharacterController::StartPolymorph_Implementation ()
 {
-	if (isPig)
+	if (isPig || _isShooting)
 		return;
 
 	_isPolymorphing = true;
@@ -181,6 +189,17 @@ void AMainCharacterController::ShootInput ()
 		return;
 	}
 
+	_isShooting = true;
+}
+
+void AMainCharacterController::ClientShoot ()
+{
+	if (isPig)
+	{
+		StartCharge ();
+		return;
+	}
+
 	//Declare start and end position of the line trace based on camera position and rotation
 	FVector start = _cameraComponent->GetComponentLocation ();
 	FVector end = _cameraComponent->GetComponentLocation () + (_cameraComponent->GetForwardVector () * 100000.0f);
@@ -190,10 +209,17 @@ void AMainCharacterController::ShootInput ()
 
 void AMainCharacterController::Shoot_Implementation (FVector startPosition, FVector endPosition)
 {
-	if (isPig || _isPolymorphing)
+	if (isPig || _isPolymorphing || !_canShoot)
 		return;
 
+	_isShooting = true;
+
 	ShootBP ();
+
+	//Shoot cooldown
+	_canShoot = false;
+	FTimerHandle shootCooldownTimerHandle;
+	GetWorld ()->GetTimerManager ().SetTimer (shootCooldownTimerHandle, this, &AMainCharacterController::ResetShootCooldown, 1.0f, false);
 
 	//Line trace from camera to check if there is something in the crosshair's sight
 	FCollisionQueryParams traceParams = FCollisionQueryParams (FName (TEXT ("RV_Trace")), true, this);
@@ -212,6 +238,8 @@ void AMainCharacterController::Shoot_Implementation (FVector startPosition, FVec
 		if (hit.GetActor () == nullptr)
 			return;
 
+		//GEngine->AddOnScreenDebugMessage (-1, 15.0f, FColor::Yellow, hit.GetActor ()->GetName ());
+
 		//If line trace hits a player, polymorph the target
 		if (hit.GetActor ()->ActorHasTag ("Player"))
 		{
@@ -226,6 +254,11 @@ void AMainCharacterController::Shoot_Implementation (FVector startPosition, FVec
 bool AMainCharacterController::Shoot_Validate (FVector startPosition, FVector endPosition)
 {
 	return true;
+}
+
+void AMainCharacterController::ResetShootCooldown ()
+{
+	_canShoot = true;
 }
 
 void AMainCharacterController::StartCharge_Implementation ()
@@ -260,7 +293,23 @@ void AMainCharacterController::StopChargeInput ()
 {
 	if (isPig)
 		StopCharge ();
+
+	if (_isShooting)
+		_isShooting = false;
+
+	SetShootingToFalse ();
 }
+
+void AMainCharacterController::SetShootingToFalse_Implementation ()
+{
+	_isShooting = false;
+}
+
+bool AMainCharacterController::SetShootingToFalse_Validate ()
+{
+	return true;
+}
+
 
 FVector AMainCharacterController::ClientGetLaserTargetPosition ()
 {
@@ -325,6 +374,10 @@ void AMainCharacterController::GetLifetimeReplicatedProps (TArray <FLifetimeProp
 
 	DOREPLIFETIME (AMainCharacterController, pigCharging);
 	DOREPLIFETIME (AMainCharacterController, pigChargeTimer);
+
+	DOREPLIFETIME (AMainCharacterController, _isPolymorphing);
+
+	DOREPLIFETIME (AMainCharacterController, _canShoot);
 
 	DOREPLIFETIME (AMainCharacterController, _gameTimer);
 }
