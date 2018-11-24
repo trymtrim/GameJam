@@ -7,10 +7,10 @@
 AMainGameMode::AMainGameMode ()
 {
 	//Set default pawn class
-	/*static ConstructorHelpers::FClassFinder <APawn> PlayerPawnClass (TEXT ("/Game/ParagonDrongo/Characters/Heroes/Drongo/DrongoPlayerCharacter"));
+	static ConstructorHelpers::FClassFinder <APawn> PlayerPawnClass (TEXT ("/Game/Blueprints/MainCharacterControllerBP"));
 
 	if (PlayerPawnClass.Class != NULL)
-		DefaultPawnClass = PlayerPawnClass.Class;*/
+		DefaultPawnClass = PlayerPawnClass.Class;
 
 	//Set default player controller class
 	//PlayerControllerClass = AMainPlayerController::StaticClass ();
@@ -18,5 +18,3 @@ AMainGameMode::AMainGameMode ()
 	//Set default game state class
 	//GameStateClass = AMainGameState::StaticClass ();
 }
-
-
