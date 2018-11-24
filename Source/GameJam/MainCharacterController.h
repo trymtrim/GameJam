@@ -22,7 +22,16 @@ public:
 	//Called to bind functionality to input
 	virtual void SetupPlayerInputComponent (class UInputComponent* PlayerInputComponent) override;
 
+	void HitPolymorph ();
+
 	UPROPERTY (BlueprintReadOnly) FVector laserTargetPosition;
+	UPROPERTY (Replicated, BlueprintReadOnly) float polymorphCharge = 0.0f;
+
+	UPROPERTY (Replicated, BlueprintReadOnly) bool isPig = false;
+	UPROPERTY (Replicated, BlueprintReadOnly) float pigTimer = 0.0f;
+
+	UPROPERTY (Replicated, BlueprintReadOnly) bool showTargetPigTimer = false;
+	UPROPERTY (Replicated, BlueprintReadOnly) float targetPigTimer = 0.0f;
 
 protected:
 	//Called when the game starts or when spawned
@@ -49,6 +58,8 @@ private:
 	void TurnIntoHuman ();
 
 	bool _isPolymorphing = false;
+
+	float _removeTargetPigTimerTimer = 0.0f;
 
 	UCameraComponent* _cameraComponent;
 };
