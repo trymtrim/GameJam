@@ -61,6 +61,8 @@ protected:
 	void StopPolymorphBP ();
 	UFUNCTION (BlueprintImplementableEvent, Category = "Character Controller")
 	void ShootBP ();
+	UFUNCTION (BlueprintImplementableEvent, Category = "Character Controller")
+	void ChargeBP (FVector direction, float force);
 
 private:
 	UFUNCTION (Server, Reliable, WithValidation)
@@ -73,7 +75,7 @@ private:
 	UFUNCTION (Server, Reliable, WithValidation)
 	void StartCharge ();
 	UFUNCTION (Server, Reliable, WithValidation)
-	void StopCharge ();
+	void StopCharge (FVector direction);
 
 	void Charge ();
 	void StopChargeInput ();
