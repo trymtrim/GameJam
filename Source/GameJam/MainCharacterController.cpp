@@ -63,14 +63,37 @@ void AMainCharacterController::Tick (float DeltaTime)
 
 		_gameTimer = _gameMode->gameTimer;
 
+		GEngine->AddOnScreenDebugMessage (-1, 15.0f, FColor::Yellow, FString::SanitizeFloat (_gameTimer));
+
 		if (pigCharging)
 			Charge ();
+
+		if (isStunned)
+		{
+			_stunTimer += DeltaTime;
+
+			if (_stunTimer >= 5.0f || isPig)
+			{
+				isStunned = false;
+				_stunTimer = 0.0f;
+			}
+		}
+
+		if (isPig)
+		{
+			if (pigChargeTimer > 0.0f)
+			{
+				pigChargeTimer -= 0.15f * DeltaTime;
+
+				if (pigChargeTimer < 0.0f)
+					pigChargeTimer = 0.0f;
+			}
+		}
 	}
 	else
 	{
 		int minutes = FMath::FloorToInt (_gameTimer / 60);
 		int seconds = FMath::RoundToInt ((int) _gameTimer % 60);
-
 
 		FString minutesString = "";
 		FString secondsString = "";
@@ -87,9 +110,11 @@ void AMainCharacterController::Tick (float DeltaTime)
 
 		gameTimerText = minutesString + ":" + secondsString;
 
+		GEngine->AddOnScreenDebugMessage (-1, 15.0f, FColor::Yellow, gameTimerText);
+
 		if (_isShooting)
 		{
-			if (_isPolymorphing)
+			if (_isPolymorphing || isStunned)
 				_isShooting = false;
 			else
 				ClientShoot ();
@@ -109,7 +134,7 @@ bool AMainCharacterController::ServerChangeMesh_Validate ()
 
 void AMainCharacterController::StartPolymorph_Implementation ()
 {
-	if (isPig || _isShooting)
+	if (isPig || _isShooting || isStunned)
 		return;
 
 	_isPolymorphing = true;
@@ -137,7 +162,7 @@ bool AMainCharacterController::StopPolymorph_Validate ()
 
 void AMainCharacterController::Polymorph ()
 {
-	if (isPig)
+	if (isPig || isStunned)
 	{
 		StopPolymorph ();
 		return;
@@ -191,12 +216,15 @@ void AMainCharacterController::ShootInput ()
 		StartCharge ();
 		return;
 	}
-	else
+	else if (!isStunned)
 		_isShooting = true;
 }
 
 void AMainCharacterController::ClientShoot ()
 {
+	if (isStunned)
+		_isShooting = false;
+
 	//Declare start and end position of the line trace based on camera position and rotation
 	FVector start = _cameraComponent->GetComponentLocation ();
 	FVector end = _cameraComponent->GetComponentLocation () + (_cameraComponent->GetForwardVector () * 100000.0f);
@@ -206,7 +234,7 @@ void AMainCharacterController::ClientShoot ()
 
 void AMainCharacterController::Shoot_Implementation (FVector startPosition, FVector endPosition)
 {
-	if (isPig || _isPolymorphing || !_canShoot)
+	if (isPig || _isPolymorphing || !_canShoot || isStunned)
 		return;
 
 	_isShooting = true;
@@ -260,6 +288,9 @@ void AMainCharacterController::ResetShootCooldown ()
 
 void AMainCharacterController::StartCharge_Implementation ()
 {
+	if (pigChargeTimer > 0.0f)
+		return;
+
 	pigCharging = true;
 }
 
@@ -270,12 +301,19 @@ bool AMainCharacterController::StartCharge_Validate ()
 
 void AMainCharacterController::StopCharge_Implementation (FVector direction)
 {
+	if (!pigCharging)
+		return;
+
 	//Do the charge
 	if (isPig)
+	{
+		if (pigChargeTimer < 0.4f)
+			pigChargeTimer = 0.4f;
+
 		ChargeBP (direction, pigChargeTimer);
+	}
 
 	pigCharging = false;
-	pigChargeTimer = 0.0f;
 }
 
 bool AMainCharacterController::StopCharge_Validate (FVector direction)
@@ -329,6 +367,11 @@ void AMainCharacterController::StopChargeInput ()
 	SetShootingToFalse ();
 }
 
+void AMainCharacterController::GetStunned ()
+{
+	isStunned = true;
+}
+
 void AMainCharacterController::SetShootingToFalse_Implementation ()
 {
 	_isShooting = false;
@@ -365,7 +408,7 @@ void AMainCharacterController::HitPolymorph ()
 	if (isPig)
 		return;
 
-	polymorphCharge += 0.5f * GetWorld ()->DeltaTimeSeconds;
+	polymorphCharge += GetWorld ()->DeltaTimeSeconds;
 
 	if (polymorphCharge >= 1.0f)
 	{
@@ -379,6 +422,7 @@ void AMainCharacterController::TurnIntoPig ()
 	if (_isPolymorphing)
 		StopPolymorph ();
 
+	pigChargeTimer = 0.0f;
 	pigTimer = 20.0f;
 	isPig = true;
 	TurnIntoPigBP ();
@@ -407,6 +451,8 @@ void AMainCharacterController::GetLifetimeReplicatedProps (TArray <FLifetimeProp
 	DOREPLIFETIME (AMainCharacterController, _isPolymorphing);
 
 	DOREPLIFETIME (AMainCharacterController, _canShoot);
+
+	DOREPLIFETIME (AMainCharacterController, isStunned);
 
 	DOREPLIFETIME (AMainCharacterController, _gameTimer);
 }

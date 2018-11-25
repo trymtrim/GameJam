@@ -31,6 +31,9 @@ public:
 	UFUNCTION (BlueprintCallable)
 	FVector ClientGetLaserTargetPosition ();
 
+	UFUNCTION (BlueprintCallable)
+	void GetStunned ();
+
 	UPROPERTY (BlueprintReadOnly) FVector laserTargetPosition;
 	UPROPERTY (Replicated, BlueprintReadOnly) float polymorphCharge = 0.0f;
 
@@ -44,6 +47,8 @@ public:
 	UPROPERTY (Replicated, BlueprintReadOnly) float pigChargeTimer = 0.0f;
 
 	UPROPERTY (BlueprintReadOnly) FString gameTimerText = "";
+
+	UPROPERTY (Replicated, BlueprintReadOnly) bool isStunned = false;
 
 protected:
 	//Called when the game starts or when spawned
@@ -87,6 +92,7 @@ private:
 	void ClientShoot ();
 	void ResetShootCooldown ();
 
+	float _stunTimer = 0.0f;
 
 	UFUNCTION (Server, Reliable, WithValidation)
 	void Shoot (FVector startPosition, FVector endPosition);
