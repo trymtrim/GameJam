@@ -6,6 +6,8 @@
 #include "GameFramework/GameMode.h"
 #include "MainGameMode.generated.h"
 
+class AMainCharacterController;
+
 UCLASS()
 class GAMEJAM_API AMainGameMode : public AGameMode
 {
@@ -19,13 +21,26 @@ public:
 
 	virtual AActor* ChoosePlayerStart_Implementation (AController* Player) override;
 
+	UFUNCTION (BlueprintCallable)
+	void UpdatePlayerScore (int playerIndex);
+
+	void RegisterPlayer (AMainCharacterController* characterController);
+
 	int GetPlayerIndex ();
 
-	float gameTimer = 600.0f;
+	float gameTimer = 10.0f;
 	bool gameFinished = false;
+
+	int playerOneScore = 0;
+	int playerTwoScore = 0;
+	int playerThreeScore = 0;
+
+	bool gameStarted = false;
 
 private:
 	void FinishGame ();
+
+	TArray <AMainCharacterController*> _characters;
 
 	int _maxPlayers = 3;
 	int _playerCount = 0;

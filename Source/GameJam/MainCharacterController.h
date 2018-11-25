@@ -34,6 +34,9 @@ public:
 	UFUNCTION (BlueprintCallable)
 	void GetStunned ();
 
+	UFUNCTION (BlueprintCallable)
+	void UpdateScore ();
+
 	UPROPERTY (BlueprintReadOnly) FVector laserTargetPosition;
 	UPROPERTY (Replicated, BlueprintReadOnly) float polymorphCharge = 0.0f;
 
@@ -49,6 +52,25 @@ public:
 	UPROPERTY (BlueprintReadOnly) FString gameTimerText = "";
 
 	UPROPERTY (Replicated, BlueprintReadOnly) bool isStunned = false;
+
+	UPROPERTY (BlueprintReadOnly) int yourScore = 0;
+	UPROPERTY (BlueprintReadOnly) int firstEnemyScore = 0;
+	UPROPERTY (BlueprintReadOnly) int secondEnemyScore = 0;
+
+	UPROPERTY (BlueprintReadOnly) int firstEnemyIcon = 0;
+	UPROPERTY (BlueprintReadOnly) int secondEnemyIcon = 0;
+
+	UPROPERTY (Replicated) int playerOneScore = 0;
+	UPROPERTY (Replicated) int playerTwoScore = 0;
+	UPROPERTY (Replicated) int playerThreeScore = 0;
+
+	UPROPERTY (Replicated, BlueprintReadOnly) bool gameStarted = false;
+
+	UFUNCTION (BlueprintCallable)
+	void SetPlayerIndex (int index);
+
+	UFUNCTION (BlueprintCallable)
+	void ResetPigChargeTimer ();
 
 protected:
 	//Called when the game starts or when spawned
@@ -68,6 +90,10 @@ protected:
 	void ShootBP ();
 	UFUNCTION (BlueprintImplementableEvent, Category = "Character Controller")
 	void ChargeBP (FVector direction, float force);
+	UFUNCTION (BlueprintImplementableEvent, Category = "Character Controller")
+	void PlayeEmoteBP ();
+	UFUNCTION (BlueprintImplementableEvent, Category = "Character Controller")
+	void FinishGameBP ();
 
 private:
 	UFUNCTION (Server, Reliable, WithValidation)
@@ -94,6 +120,10 @@ private:
 
 	float _stunTimer = 0.0f;
 
+	bool _hasPlayedEmote = false;
+
+	bool _gameFinished = false;
+
 	UFUNCTION (Server, Reliable, WithValidation)
 	void Shoot (FVector startPosition, FVector endPosition);
 
@@ -106,11 +136,13 @@ private:
 	UPROPERTY (Replicated) bool _canShoot = true;
 	bool _isShooting = false;
 
-	UPROPERTY (Replicated) float _gameTimer = 600.0f;
+	UPROPERTY (Replicated) float _gameTimers = 600.0f;
 
 	UPROPERTY (Replicated) bool _isPolymorphing = false;
 
 	float _removeTargetPigTimerTimer = 0.0f;
+
+	UPROPERTY (Replicated) int _playerIndex = 0;
 
 	UCameraComponent* _cameraComponent;
 	AMainGameMode* _gameMode;

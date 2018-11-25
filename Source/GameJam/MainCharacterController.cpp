@@ -22,7 +22,10 @@ void AMainCharacterController::BeginPlay ()
 	_cameraComponent = cameraComps [0];
 
 	if (GetWorld ()->IsServer ())
+	{
 		_gameMode = Cast <AMainGameMode> (GetWorld ()->GetAuthGameMode ());
+		_gameMode->RegisterPlayer (this);
+	}
 	else
 		ServerChangeMesh ();
 }
@@ -61,9 +64,7 @@ void AMainCharacterController::Tick (float DeltaTime)
 				showTargetPigTimer = false;
 		}
 
-		_gameTimer = _gameMode->gameTimer;
-
-		GEngine->AddOnScreenDebugMessage (-1, 15.0f, FColor::Yellow, FString::SanitizeFloat (_gameTimer));
+		_gameTimers = _gameMode->gameTimer;
 
 		if (pigCharging)
 			Charge ();
@@ -89,11 +90,27 @@ void AMainCharacterController::Tick (float DeltaTime)
 					pigChargeTimer = 0.0f;
 			}
 		}
+
+		if (!gameStarted)
+		{
+			if (_gameMode->gameStarted)
+				gameStarted = true;
+		}
+		else if (!_gameFinished)
+		{
+			if (_gameMode->gameFinished)
+			{
+				gameStarted = false;
+				_gameFinished = true;
+
+				FinishGameBP ();
+			}
+		}
 	}
 	else
 	{
-		int minutes = FMath::FloorToInt (_gameTimer / 60);
-		int seconds = FMath::RoundToInt ((int) _gameTimer % 60);
+		int minutes = FMath::FloorToInt (_gameTimers / 60);
+		int seconds = FMath::RoundToInt ((int) _gameTimers % 60);
 
 		FString minutesString = "";
 		FString secondsString = "";
@@ -110,8 +127,6 @@ void AMainCharacterController::Tick (float DeltaTime)
 
 		gameTimerText = minutesString + ":" + secondsString;
 
-		GEngine->AddOnScreenDebugMessage (-1, 15.0f, FColor::Yellow, gameTimerText);
-
 		if (_isShooting)
 		{
 			if (_isPolymorphing || isStunned)
@@ -119,7 +134,59 @@ void AMainCharacterController::Tick (float DeltaTime)
 			else
 				ClientShoot ();
 		}
+
+		if (_playerIndex == 0)
+		{
+			yourScore = playerOneScore;
+
+			firstEnemyScore = playerTwoScore;
+			secondEnemyScore = playerThreeScore;
+
+			firstEnemyIcon = 1;
+			secondEnemyIcon = 2;
+		}
+		else if (_playerIndex == 1)
+		{
+			yourScore = playerTwoScore;
+
+			firstEnemyScore = playerThreeScore;
+			secondEnemyScore = playerOneScore;
+
+			firstEnemyIcon = 2;
+			secondEnemyIcon = 0;
+		}
+		else if (_playerIndex == 2)
+		{
+			yourScore = playerThreeScore;
+
+			firstEnemyScore = playerOneScore;
+			secondEnemyScore = playerTwoScore;
+
+			firstEnemyIcon = 0;
+			secondEnemyIcon = 1;
+		}
+
+		if (_gameTimers <= 90.0f && !_hasPlayedEmote && yourScore > firstEnemyScore && yourScore > secondEnemyScore)
+		{
+			_hasPlayedEmote = true;
+			PlayeEmoteBP ();
+		}
 	}
+}
+
+void AMainCharacterController::ResetPigChargeTimer ()
+{
+	pigChargeTimer = 0.0f;
+}
+
+void AMainCharacterController::SetPlayerIndex (int index)
+{
+	_playerIndex = index;
+}
+
+void AMainCharacterController::UpdateScore ()
+{
+	_gameMode->UpdatePlayerScore (_playerIndex);
 }
 
 void AMainCharacterController::ServerChangeMesh_Implementation ()
@@ -134,7 +201,7 @@ bool AMainCharacterController::ServerChangeMesh_Validate ()
 
 void AMainCharacterController::StartPolymorph_Implementation ()
 {
-	if (isPig || _isShooting || isStunned)
+	if (isPig || _isShooting || isStunned || !gameStarted)
 		return;
 
 	_isPolymorphing = true;
@@ -148,7 +215,7 @@ bool AMainCharacterController::StartPolymorph_Validate ()
 
 void AMainCharacterController::StopPolymorph_Implementation ()
 {
-	if (isPig)
+	if (isPig || !gameStarted)
 		return;
 
 	_isPolymorphing = false;
@@ -211,6 +278,9 @@ void AMainCharacterController::Polymorph ()
 
 void AMainCharacterController::ShootInput ()
 {
+	if (!gameStarted)
+		return;
+
 	if (isPig)
 	{
 		StartCharge ();
@@ -244,7 +314,7 @@ void AMainCharacterController::Shoot_Implementation (FVector startPosition, FVec
 	//Shoot cooldown
 	_canShoot = false;
 	FTimerHandle shootCooldownTimerHandle;
-	GetWorld ()->GetTimerManager ().SetTimer (shootCooldownTimerHandle, this, &AMainCharacterController::ResetShootCooldown, 1.0f, false);
+	GetWorld ()->GetTimerManager ().SetTimer (shootCooldownTimerHandle, this, &AMainCharacterController::ResetShootCooldown, 0.45f, false);
 
 	//Line trace from camera to check if there is something in the crosshair's sight
 	FCollisionQueryParams traceParams = FCollisionQueryParams (FName (TEXT ("RV_Trace")), true, this);
@@ -334,6 +404,9 @@ void AMainCharacterController::Charge ()
 
 void AMainCharacterController::StopChargeInput ()
 {
+	if (!gameStarted)
+		return;
+
 	if (isPig)
 	{
 		FVector direction;
@@ -454,7 +527,14 @@ void AMainCharacterController::GetLifetimeReplicatedProps (TArray <FLifetimeProp
 
 	DOREPLIFETIME (AMainCharacterController, isStunned);
 
-	DOREPLIFETIME (AMainCharacterController, _gameTimer);
+	DOREPLIFETIME (AMainCharacterController, _gameTimers);
+
+	DOREPLIFETIME (AMainCharacterController, playerOneScore);
+	DOREPLIFETIME (AMainCharacterController, playerTwoScore);
+	DOREPLIFETIME (AMainCharacterController, playerThreeScore);
+
+	DOREPLIFETIME (AMainCharacterController, _playerIndex);
+	DOREPLIFETIME (AMainCharacterController, gameStarted);
 }
 
 //Called to bind functionality to input

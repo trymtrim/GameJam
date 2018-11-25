@@ -6,6 +6,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Engine/World.h"
 #include "GameFramework/PlayerStart.h"
+#include "MainCharacterController.h"
 
 AMainGameMode::AMainGameMode ()
 {
@@ -27,7 +28,8 @@ void AMainGameMode::Tick (float DeltaTime)
 {
 	Super::Tick (DeltaTime);
 
-	gameTimer -= DeltaTime;
+	if (gameStarted && !gameFinished)
+		gameTimer -= DeltaTime;
 
 	if (gameTimer <= 0.0f && !gameFinished)
 		FinishGame ();
@@ -35,12 +37,45 @@ void AMainGameMode::Tick (float DeltaTime)
 
 void AMainGameMode::FinishGame ()
 {
+	gameTimer = 0.0f;
+	gameStarted = false;
 	gameFinished = true;
+}
+
+void AMainGameMode::UpdatePlayerScore (int playerIndex)
+{
+	switch (playerIndex)
+	{
+	case 0:
+		playerOneScore++;
+		break;
+	case 1:
+		playerTwoScore++;
+		break;
+	case 2:
+		playerThreeScore++;
+		break;
+	}
+
+	for (int i = 0; i < _characters.Num (); i++)
+	{
+		_characters [i]->playerOneScore = playerOneScore;
+		_characters [i]->playerTwoScore = playerTwoScore;
+		_characters [i]->playerThreeScore = playerThreeScore;
+	}
+}
+
+void AMainGameMode::RegisterPlayer (AMainCharacterController* characterController)
+{
+	_characters.Add (characterController);
 }
 
 int AMainGameMode::GetPlayerIndex ()
 {
 	_playerCharacters++;
+
+	if (_playerCharacters >= 3)
+		gameStarted = true;
 
 	return _playerCharacters - 1;
 }
