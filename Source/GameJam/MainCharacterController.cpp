@@ -220,6 +220,8 @@ void AMainCharacterController::StopPolymorph_Implementation ()
 
 	_isPolymorphing = false;
 	StopPolymorphBP ();
+
+	laserColor = false;
 }
 
 bool AMainCharacterController::StopPolymorph_Validate ()
@@ -252,7 +254,10 @@ void AMainCharacterController::Polymorph ()
 		laserTargetPosition = hit.Location;
 
 		if (hit.GetActor () == nullptr)
+		{
+			laserColor = false;
 			return;
+		}
 
 		//If line trace hits a player, polymorph the target
 		if (hit.GetActor ()->ActorHasTag ("Player"))
@@ -267,12 +272,19 @@ void AMainCharacterController::Polymorph ()
 				targetPigTimer = player->polymorphCharge;
 
 				_removeTargetPigTimerTimer = 1.0f;
+
+				laserColor = true;
 			}
+			else
+				laserColor = false;
 		}
+		else
+			laserColor = false;
 	}
 	else
 	{
 		laserTargetPosition = _cameraComponent->GetComponentLocation () + (_cameraComponent->GetForwardVector () * 5000.0f);
+		laserColor = false;
 	}
 }
 
@@ -330,6 +342,8 @@ void AMainCharacterController::Shoot_Implementation (FVector startPosition, FVec
 	//Check if line trace hits anything
 	if (GetWorld ()->LineTraceSingleByChannel (hit, start, end, ECC_Visibility, traceParams))
 	{
+		ShootHitBP (hit.Location);
+
 		if (hit.GetActor () == nullptr)
 			return;
 
@@ -535,6 +549,8 @@ void AMainCharacterController::GetLifetimeReplicatedProps (TArray <FLifetimeProp
 
 	DOREPLIFETIME (AMainCharacterController, _playerIndex);
 	DOREPLIFETIME (AMainCharacterController, gameStarted);
+
+	DOREPLIFETIME (AMainCharacterController, laserColor);
 }
 
 //Called to bind functionality to input

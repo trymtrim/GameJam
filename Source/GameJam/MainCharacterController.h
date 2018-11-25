@@ -66,6 +66,8 @@ public:
 
 	UPROPERTY (Replicated, BlueprintReadOnly) bool gameStarted = false;
 
+	UPROPERTY (Replicated, BlueprintReadOnly) bool laserColor = false;
+
 	UFUNCTION (BlueprintCallable)
 	void SetPlayerIndex (int index);
 
@@ -94,6 +96,9 @@ protected:
 	void PlayeEmoteBP ();
 	UFUNCTION (BlueprintImplementableEvent, Category = "Character Controller")
 	void FinishGameBP ();
+
+	UFUNCTION (BlueprintImplementableEvent, Category = "Character Controller")
+	void ShootHitBP (FVector hitPosition);
 
 private:
 	UFUNCTION (Server, Reliable, WithValidation)
