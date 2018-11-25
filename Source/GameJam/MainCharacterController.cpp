@@ -62,6 +62,9 @@ void AMainCharacterController::Tick (float DeltaTime)
 		}
 
 		_gameTimer = _gameMode->gameTimer;
+
+		if (pigCharging)
+			Charge ();
 	}
 	else
 	{
@@ -188,18 +191,12 @@ void AMainCharacterController::ShootInput ()
 		StartCharge ();
 		return;
 	}
-
-	_isShooting = true;
+	else
+		_isShooting = true;
 }
 
 void AMainCharacterController::ClientShoot ()
 {
-	if (isPig)
-	{
-		StartCharge ();
-		return;
-	}
-
 	//Declare start and end position of the line trace based on camera position and rotation
 	FVector start = _cameraComponent->GetComponentLocation ();
 	FVector end = _cameraComponent->GetComponentLocation () + (_cameraComponent->GetForwardVector () * 100000.0f);
@@ -271,28 +268,60 @@ bool AMainCharacterController::StartCharge_Validate ()
 	return true;
 }
 
-void AMainCharacterController::StopCharge_Implementation ()
+void AMainCharacterController::StopCharge_Implementation (FVector direction)
 {
+	//Do the charge
+	if (isPig)
+		ChargeBP (direction, pigChargeTimer);
+
 	pigCharging = false;
 	pigChargeTimer = 0.0f;
-
-	//Do the charge
 }
 
-bool AMainCharacterController::StopCharge_Validate ()
+bool AMainCharacterController::StopCharge_Validate (FVector direction)
 {
 	return true;
 }
 
 void AMainCharacterController::Charge ()
 {
+	pigChargeTimer += GetWorld ()->DeltaTimeSeconds;
 
+	if (pigChargeTimer > 1.0f)
+		pigChargeTimer = 1.0f;
+
+	if (!isPig)
+		pigCharging = false;
 }
 
 void AMainCharacterController::StopChargeInput ()
 {
 	if (isPig)
-		StopCharge ();
+	{
+		FVector direction;
+
+		//Line trace from camera to check if there is something in the crosshair's sight
+		FCollisionQueryParams traceParams = FCollisionQueryParams (FName (TEXT ("RV_Trace")), true, this);
+		traceParams.bTraceComplex = true;
+		traceParams.bReturnPhysicalMaterial = false;
+
+		FHitResult hit (ForceInit);
+
+		//Declare start and end position of the line trace based on camera position and rotation
+		FVector start = _cameraComponent->GetComponentLocation ();
+		FVector end = _cameraComponent->GetComponentLocation () + (_cameraComponent->GetForwardVector () * 10000.0f);
+
+		//Check if line trace hits anything
+		if (GetWorld ()->LineTraceSingleByChannel (hit, start, end, ECC_Visibility, traceParams))
+			direction = hit.ImpactPoint - GetActorLocation ();
+		else //If line trace doesn't hit anything, spawn bullet with rotation towards the end of the line trace
+			direction = end - GetActorLocation ();
+
+		direction.Normalize ();
+
+		//_cameraComponent->GetForwardVector ()
+		StopCharge (direction);
+	}
 
 	if (_isShooting)
 		_isShooting = false;
