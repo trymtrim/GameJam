@@ -28,7 +28,7 @@ public:
 
 	int GetPlayerIndex ();
 
-	float gameTimer = 10.0f;
+	float gameTimer = 600.0f;
 	bool gameFinished = false;
 
 	int playerOneScore = 0;

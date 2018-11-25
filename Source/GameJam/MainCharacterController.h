@@ -60,9 +60,9 @@ public:
 	UPROPERTY (BlueprintReadOnly) int firstEnemyIcon = 0;
 	UPROPERTY (BlueprintReadOnly) int secondEnemyIcon = 0;
 
-	UPROPERTY (Replicated) int playerOneScore = 0;
-	UPROPERTY (Replicated) int playerTwoScore = 0;
-	UPROPERTY (Replicated) int playerThreeScore = 0;
+	UPROPERTY (Replicated, BlueprintReadOnly) int playerOneScore = 0;
+	UPROPERTY (Replicated, BlueprintReadOnly) int playerTwoScore = 0;
+	UPROPERTY (Replicated, BlueprintReadOnly) int playerThreeScore = 0;
 
 	UPROPERTY (Replicated, BlueprintReadOnly) bool gameStarted = false;
 
